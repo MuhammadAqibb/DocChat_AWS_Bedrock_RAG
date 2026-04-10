@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AskYourPDF — Chat With Your Documents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0d0f12;--bg2:#13161b;--bg3:#1a1e26;--bg4:#21262f;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --text:#e8eaf0;--text2:#9099ab;--text3:#5a6478;
+  --accent:#4f8ef7;--accent2:#3b7de8;--accent-glow:rgba(79,142,247,0.15);
+  --green:#34d399;--green-bg:rgba(52,211,153,0.1);
+  --red:#f87171;--red-bg:rgba(248,113,113,0.1);
+  --amber:#fbbf24;
+  --radius:14px;--radius-sm:8px;
+  --shadow:0 4px 24px rgba(0,0,0,0.4);--shadow-lg:0 8px 48px rgba(0,0,0,0.6);
+  --font-serif:'Instrument Serif',Georgia,serif;
+  --font-sans:'DM Sans',system-ui,sans-serif;
+}
+html,body{height:100%;overflow:hidden;}
+body{font-family:var(--font-sans);background:var(--bg);color:var(--text);display:flex;flex-direction:column;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+
+/* ── AUTH OVERLAY ─────────────────────────────────────────────────────── */
+.auth-overlay{
+  position:fixed;inset:0;background:#0d0f12;
+  display:flex;align-items:center;justify-content:center;
+  z-index:9999;font-family:var(--font-sans);
+}
+.auth-box{
+  background:var(--bg2);border:1px solid var(--border2);
+  border-radius:18px;padding:36px;width:400px;max-width:95vw;
+  box-shadow:var(--shadow-lg);
+}
+.auth-logo{
+  font-family:var(--font-serif);font-size:30px;color:var(--text);
+  text-align:center;margin-bottom:4px;
+}
+.auth-logo span{color:var(--accent);font-style:italic;}
+.auth-tagline{font-size:13px;color:var(--text3);text-align:center;margin-bottom:28px;}
+.auth-tabs{
+  display:flex;background:var(--bg3);border-radius:var(--radius-sm);
+  padding:3px;margin-bottom:20px;gap:3px;
+}
+.auth-tab{
+  flex:1;padding:9px;border:none;background:none;color:var(--text2);
+  font-family:var(--font-sans);font-size:13px;cursor:pointer;
+  border-radius:6px;transition:all 0.15s;
+}
+.auth-tab.active{background:var(--bg2);color:var(--text);font-weight:500;}
+.auth-input{
+  width:100%;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:var(--radius-sm);padding:11px 14px;font-family:var(--font-sans);
+  font-size:14px;color:var(--text);outline:none;margin-bottom:12px;
+  transition:all 0.15s;
+}
+.auth-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);}
+.auth-input::placeholder{color:var(--text3);}
+.auth-btn{
+  width:100%;padding:12px;background:var(--accent);color:#fff;
+  border:none;border-radius:var(--radius-sm);font-family:var(--font-sans);
+  font-size:14px;font-weight:500;cursor:pointer;transition:all 0.15s;margin-top:4px;
+}
+.auth-btn:hover:not(:disabled){background:var(--accent2);}
+.auth-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.auth-error{font-size:12px;color:var(--red);margin-bottom:10px;text-align:center;min-height:18px;}
+.auth-msg{font-size:12px;color:var(--green);margin-bottom:10px;text-align:center;display:none;}
+.auth-hint{font-size:11px;color:var(--text3);text-align:center;margin-top:14px;}
+
+/* ── APP HEADER ───────────────────────────────────────────────────────── */
+.app-header{
+  height:60px;background:var(--bg2);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;flex-shrink:0;z-index:100;
+}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.logo-icon{
+  width:32px;height:32px;
+  background:linear-gradient(135deg,var(--accent),#7c3aed);
+  border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;
+}
+.logo-text{font-family:var(--font-serif);font-size:20px;color:var(--text);}
+.logo-text span{color:var(--accent);font-style:italic;}
+.header-actions{display:flex;align-items:center;gap:8px;}
+.btn-icon{
+  width:36px;height:36px;border:1px solid var(--border);background:transparent;
+  border-radius:var(--radius-sm);color:var(--text2);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:15px;transition:all 0.15s;
+}
+.btn-icon:hover{background:var(--bg3);color:var(--text);border-color:var(--border2);}
+.new-chat-btn{
+  height:36px;padding:0 14px;background:var(--accent);color:#fff;border:none;
+  border-radius:var(--radius-sm);font-family:var(--font-sans);font-size:13px;
+  font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all 0.15s;
+}
+.new-chat-btn:hover{background:var(--accent2);transform:translateY(-1px);}
+.user-badge{
+  display:flex;align-items:center;gap:7px;padding:4px 12px;
+  background:var(--bg3);border:1px solid var(--border);border-radius:20px;
+  font-size:12px;color:var(--text2);
+}
+.user-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--green);}
+
+/* ── LAYOUT ───────────────────────────────────────────────────────────── */
+.app-body{display:flex;flex:1;overflow:hidden;}
+
+/* ── SIDEBAR ──────────────────────────────────────────────────────────── */
+.sidebar{
+  width:300px;background:var(--bg2);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;
+}
+.sidebar-section{padding:16px;border-bottom:1px solid var(--border);}
+.sidebar-label{
+  font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;
+  color:var(--text3);margin-bottom:12px;
+}
+
+/* ── UPLOAD ZONE ──────────────────────────────────────────────────────── */
+.upload-zone{
+  border:2px dashed var(--border2);border-radius:var(--radius);
+  padding:20px 16px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative;
+}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--accent);background:var(--accent-glow);}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-icon{font-size:28px;margin-bottom:8px;display:block;}
+.upload-text{font-size:13px;color:var(--text2);line-height:1.5;}
+.upload-text strong{color:var(--accent);font-weight:500;}
+.upload-hint{font-size:11px;color:var(--text3);margin-top:6px;}
+.upload-progress{display:none;margin-top:12px;}
+.upload-progress.active{display:block;}
+.progress-file{
+  display:flex;align-items:center;gap:8px;padding:8px 10px;
+  background:var(--bg3);border-radius:var(--radius-sm);margin-bottom:6px;
+}
+.progress-file-icon{font-size:16px;flex-shrink:0;}
+.progress-file-info{flex:1;min-width:0;}
+.progress-file-name{font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.progress-file-status{font-size:11px;color:var(--text3);margin-top:2px;}
+.progress-bar-wrap{height:3px;background:var(--border);border-radius:2px;margin-top:6px;overflow:hidden;}
+.progress-bar{height:100%;background:var(--accent);border-radius:2px;transition:width 0.3s;}
+
+/* ── DOC LIST ─────────────────────────────────────────────────────────── */
+.doc-list{flex:1;overflow-y:auto;padding:8px;}
+.doc-empty{text-align:center;padding:24px 16px;color:var(--text3);font-size:13px;line-height:1.6;}
+.doc-empty-icon{font-size:32px;margin-bottom:8px;display:block;opacity:0.4;}
+.doc-item{
+  display:flex;align-items:center;gap:10px;padding:10px;
+  border-radius:var(--radius-sm);cursor:pointer;transition:all 0.15s;
+  border:1px solid transparent;position:relative;
+}
+.doc-item:hover{background:var(--bg3);}
+.doc-item.active{background:var(--accent-glow);border-color:rgba(79,142,247,0.2);}
+.doc-icon{
+  width:34px;height:34px;background:var(--bg4);border-radius:6px;
+  display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;
+}
+.doc-item.active .doc-icon{background:rgba(79,142,247,0.15);}
+.doc-info{flex:1;min-width:0;}
+.doc-name{font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500;}
+.doc-meta{font-size:11px;color:var(--text3);margin-top:2px;}
+.doc-status{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;}
+.doc-status.syncing{background:var(--amber);animation:pulse 1.5s ease-in-out infinite;}
+.doc-status.error{background:var(--red);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+.doc-delete{
+  width:24px;height:24px;background:none;border:none;color:var(--text3);
+  cursor:pointer;border-radius:4px;display:none;align-items:center;
+  justify-content:center;font-size:13px;transition:all 0.15s;flex-shrink:0;
+}
+.doc-item:hover .doc-delete{display:flex;}
+.doc-delete:hover{background:var(--red-bg);color:var(--red);}
+
+/* ── MAIN CHAT ────────────────────────────────────────────────────────── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.chat-header{
+  height:56px;border-bottom:1px solid var(--border);display:flex;
+  align-items:center;padding:0 24px;gap:12px;flex-shrink:0;background:var(--bg);
+}
+.chat-header-doc{
+  display:flex;align-items:center;gap:8px;padding:4px 10px;
+  background:var(--bg3);border:1px solid var(--border);border-radius:20px;
+  font-size:12px;color:var(--text2);
+}
+.chat-header-doc .dot{width:6px;height:6px;border-radius:50%;background:var(--green);}
+.chat-header-title{font-size:14px;font-weight:500;color:var(--text);margin-right:auto;}
+
+/* ── MESSAGES ─────────────────────────────────────────────────────────── */
+.messages{flex:1;overflow-y:auto;padding:32px 0;display:flex;flex-direction:column;}
+.message-group{
+  padding:8px 24px;display:flex;gap:14px;animation:fadeUp 0.3s ease;
+  max-width:900px;margin:0 auto;width:100%;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.message-avatar{
+  width:30px;height:30px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:13px;flex-shrink:0;margin-top:2px;
+}
+.message-avatar.user{background:var(--accent);color:#fff;font-weight:600;}
+.message-avatar.ai{background:linear-gradient(135deg,#1e2d4a,#2d1b4a);border:1px solid var(--border2);font-size:16px;}
+.message-body{flex:1;min-width:0;}
+.message-sender{font-size:12px;font-weight:600;color:var(--text3);margin-bottom:6px;letter-spacing:0.3px;}
+.message-content{font-size:15px;line-height:1.75;color:var(--text);}
+.message-content p{margin-bottom:10px;}
+.message-content p:last-child{margin-bottom:0;}
+.message-content ul,.message-content ol{padding-left:20px;margin:8px 0;}
+.message-content li{margin-bottom:4px;}
+.message-content code{
+  font-family:'Courier New',monospace;font-size:13px;background:var(--bg3);
+  border:1px solid var(--border);padding:2px 6px;border-radius:4px;color:#93c5fd;
+}
+.message-content strong{color:var(--text);font-weight:600;}
+.sources{margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;}
+.source-tag{
+  display:inline-flex;align-items:center;gap:5px;padding:4px 10px;
+  background:var(--bg3);border:1px solid var(--border);border-radius:20px;
+  font-size:11px;color:var(--text2);cursor:default;transition:all 0.15s;
+}
+.source-tag:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-glow);}
+.source-tag .page{font-weight:600;color:var(--text3);}
+
+/* ── TYPING INDICATOR ─────────────────────────────────────────────────── */
+.typing-indicator{display:flex;gap:4px;align-items:center;padding:4px 0;}
+.typing-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);animation:typing 1.2s ease-in-out infinite;}
+.typing-dot:nth-child(1){animation-delay:0s;}.typing-dot:nth-child(2){animation-delay:0.2s;}.typing-dot:nth-child(3){animation-delay:0.4s;}
+@keyframes typing{0%,80%,100%{transform:scale(1);opacity:0.4;}40%{transform:scale(1.25);opacity:1;}}
+
+/* ── EMPTY STATE ──────────────────────────────────────────────────────── */
+.chat-empty{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:40px 24px;text-align:center;
+}
+.chat-empty-hero{font-family:var(--font-serif);font-size:42px;color:var(--text);line-height:1.1;margin-bottom:12px;}
+.chat-empty-hero em{color:var(--accent);font-style:italic;}
+.chat-empty-sub{font-size:15px;color:var(--text2);max-width:400px;line-height:1.6;margin-bottom:32px;}
+.starter-prompts{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:600px;width:100%;}
+.starter-card{
+  padding:14px 16px;background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius);cursor:pointer;text-align:left;transition:all 0.2s;
+}
+.starter-card:hover{border-color:var(--accent);background:var(--accent-glow);transform:translateY(-2px);}
+.starter-card-icon{font-size:20px;margin-bottom:6px;display:block;}
+.starter-card-text{font-size:13px;color:var(--text2);line-height:1.4;}
+
+/* ── INPUT AREA ───────────────────────────────────────────────────────── */
+.input-area{padding:16px 24px 20px;border-top:1px solid var(--border);background:var(--bg);flex-shrink:0;}
+.input-area-inner{max-width:900px;margin:0 auto;}
+.input-wrap{
+  display:flex;align-items:flex-end;gap:10px;background:var(--bg2);
+  border:1px solid var(--border2);border-radius:16px;padding:10px 12px 10px 16px;transition:all 0.2s;
+}
+.input-wrap:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);}
+#chat-input{
+  flex:1;background:none;border:none;outline:none;font-family:var(--font-sans);
+  font-size:15px;color:var(--text);resize:none;max-height:180px;line-height:1.5;padding:2px 0;
+}
+#chat-input::placeholder{color:var(--text3);}
+.send-btn{
+  width:36px;height:36px;background:var(--accent);border:none;border-radius:10px;
+  color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:all 0.15s;font-size:16px;
+}
+.send-btn:hover:not(:disabled){background:var(--accent2);transform:scale(1.05);}
+.send-btn:disabled{opacity:0.35;cursor:not-allowed;transform:none;}
+.input-footer{display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding:0 4px;}
+.input-hint{font-size:11px;color:var(--text3);}
+.active-doc-badge{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3);}
+.active-doc-badge .dot{width:5px;height:5px;border-radius:50%;background:var(--green);}
+
+/* ── NO DOC BANNER ────────────────────────────────────────────────────── */
+.no-doc-banner{
+  padding:10px 24px;background:rgba(251,191,36,0.06);
+  border-bottom:1px solid rgba(251,191,36,0.15);
+  display:flex;align-items:center;gap:8px;font-size:13px;color:var(--amber);
+}
+
+/* ── TOAST ────────────────────────────────────────────────────────────── */
+.toast-container{position:fixed;top:70px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:9999;}
+.toast{
+  padding:12px 16px;border-radius:var(--radius-sm);font-size:13px;
+  display:flex;align-items:center;gap:8px;min-width:260px;
+  animation:toastIn 0.3s ease;border:1px solid transparent;box-shadow:var(--shadow);
+}
+.toast.success{background:var(--green-bg);border-color:rgba(52,211,153,0.2);color:#6ee7b7;}
+.toast.error{background:var(--red-bg);border-color:rgba(248,113,113,0.2);color:#fca5a5;}
+.toast.info{background:var(--accent-glow);border-color:rgba(79,142,247,0.2);color:#93c5fd;}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
+
+/* ── CONFIG MODAL ─────────────────────────────────────────────────────── */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;
+  display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);animation:fadeIn 0.2s ease;
+}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+.modal{
+  background:var(--bg2);border:1px solid var(--border2);border-radius:18px;
+  padding:28px;width:480px;max-width:95vw;box-shadow:var(--shadow-lg);animation:slideUp 0.25s ease;
+}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.modal-title{font-family:var(--font-serif);font-size:22px;margin-bottom:6px;}
+.modal-sub{font-size:13px;color:var(--text2);margin-bottom:24px;line-height:1.5;}
+.form-group{margin-bottom:16px;}
+.form-label{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px;display:block;letter-spacing:0.3px;}
+.form-input{
+  width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);
+  padding:10px 12px;font-family:var(--font-sans);font-size:14px;color:var(--text);
+  outline:none;transition:all 0.15s;
+}
+.form-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);}
+.form-input::placeholder{color:var(--text3);}
+.form-hint{font-size:11px;color:var(--text3);margin-top:5px;}
+.modal-actions{display:flex;gap:10px;margin-top:24px;}
+.btn-primary{
+  flex:1;padding:11px;background:var(--accent);color:#fff;border:none;
+  border-radius:var(--radius-sm);font-family:var(--font-sans);font-size:14px;font-weight:500;cursor:pointer;transition:all 0.15s;
+}
+.btn-primary:hover{background:var(--accent2);}
+.btn-secondary{
+  padding:11px 20px;background:transparent;color:var(--text2);border:1px solid var(--border2);
+  border-radius:var(--radius-sm);font-family:var(--font-sans);font-size:14px;cursor:pointer;transition:all 0.15s;
+}
+.btn-secondary:hover{background:var(--bg3);color:var(--text);}
+
+@media(max-width:768px){.sidebar{display:none;}.starter-prompts{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     AUTH OVERLAY — shown before the app, hidden after login
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="auth-overlay" id="auth-overlay">
+  <div class="auth-box">
+    <div class="auth-logo">AskYour<span>PDF</span></div>
+    <div class="auth-tagline">Sign in to chat with your documents</div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login"  onclick="switchAuthTab('login')">Sign in</button>
+      <button class="auth-tab"        id="tab-signup" onclick="switchAuthTab('signup')">Create account</button>
+    </div>
+
+    <div class="auth-error" id="auth-error"></div>
+    <div class="auth-msg"   id="auth-msg"></div>
+
+    <!-- LOGIN FORM -->
+    <div id="login-form">
+      <input class="auth-input" id="login-email"    type="email"    placeholder="Email address" autocomplete="email"/>
+      <input class="auth-input" id="login-password" type="password" placeholder="Password"      autocomplete="current-password"/>
+      <button class="auth-btn" id="login-btn" onclick="doLogin()">Sign in</button>
+    </div>
+
+    <!-- SIGNUP FORM -->
+    <div id="signup-form" style="display:none">
+      <input class="auth-input" id="signup-email"    type="email"    placeholder="Email address"         autocomplete="email"/>
+      <input class="auth-input" id="signup-password" type="password" placeholder="Password (min 8 chars)" autocomplete="new-password"/>
+      <button class="auth-btn" id="signup-btn" onclick="doSignup()">Create account</button>
+    </div>
+
+    <!-- VERIFY FORM — shown after signup -->
+    <div id="verify-form" style="display:none">
+      <input class="auth-input" id="verify-code" type="text" placeholder="Enter 6-digit code from your email" maxlength="6" style="letter-spacing:4px;text-align:center;font-size:20px;"/>
+      <button class="auth-btn" id="verify-btn" onclick="doVerify()">Verify email</button>
+    </div>
+
+    <div class="auth-hint" id="auth-hint">By signing in you agree to use this service responsibly.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     MAIN APP — hidden until login
+     ══════════════════════════════════════════════════════════════════════ -->
+<div id="app" style="display:none;flex-direction:column;height:100%;">
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <a class="logo" href="#">
+      <div class="logo-icon">📄</div>
+      <span class="logo-text">AskYour<span>PDF</span></span>
+    </a>
+    <div class="header-actions">
+      <div class="user-badge" id="user-badge" style="display:none">
+        <div class="dot"></div>
+        <span id="user-email-display"></span>
+      </div>
+      <button class="btn-icon" onclick="openConfig()" title="Settings">⚙</button>
+      <button class="btn-icon" onclick="signOut()"    title="Sign out">⏻</button>
+      <button class="new-chat-btn" onclick="newChat()"><span>+</span> New Chat</button>
+    </div>
+  </header>
+
+  <!-- BODY -->
+  <div class="app-body">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Upload PDF</div>
+        <div class="upload-zone" id="upload-zone">
+          <input type="file" id="file-input" accept=".pdf" multiple/>
+          <span class="upload-icon">☁</span>
+          <div class="upload-text"><strong>Click to upload</strong> or drag & drop</div>
+          <div class="upload-hint">PDF files only · Max 50MB</div>
+        </div>
+        <div class="upload-progress" id="upload-progress"></div>
+      </div>
+      <div class="sidebar-section" style="flex:1;display:flex;flex-direction:column;overflow:hidden;padding-bottom:0;">
+        <div class="sidebar-label">Your Documents</div>
+        <div class="doc-list" id="doc-list">
+          <div class="doc-empty"><span class="doc-empty-icon">📂</span>Upload a PDF to get started</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+      <div class="no-doc-banner" id="no-doc-banner" style="display:none">
+        ⚠ Select a document from the sidebar to start chatting
+      </div>
+      <div class="chat-header">
+        <span class="chat-header-title" id="chat-title">New Conversation</span>
+        <div class="chat-header-doc" id="chat-header-doc" style="display:none">
+          <div class="dot"></div>
+          <span id="active-doc-name"></span>
+        </div>
+      </div>
+      <div class="messages" id="messages">
+        <div class="chat-empty" id="chat-empty">
+          <div class="chat-empty-hero">Ask anything about<br/><em>your documents</em></div>
+          <p class="chat-empty-sub">Upload a PDF in the sidebar, then ask questions. Every answer comes directly from your document with page citations.</p>
+          <div class="starter-prompts">
+            <div class="starter-card" onclick="useStarter(this)"><span class="starter-card-icon">📋</span><div class="starter-card-text">Summarize the key points of this document</div></div>
+            <div class="starter-card" onclick="useStarter(this)"><span class="starter-card-icon">🔍</span><div class="starter-card-text">What are the main conclusions or recommendations?</div></div>
+            <div class="starter-card" onclick="useStarter(this)"><span class="starter-card-icon">📊</span><div class="starter-card-text">List all important numbers, dates or figures mentioned</div></div>
+            <div class="starter-card" onclick="useStarter(this)"><span class="starter-card-icon">❓</span><div class="starter-card-text">What questions does this document answer?</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="input-area">
+        <div class="input-area-inner">
+          <div class="input-wrap">
+            <textarea id="chat-input" placeholder="Ask a question about your document..." rows="1"
+              onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+            <button class="send-btn" id="send-btn" onclick="sendMessage()" disabled>↑</button>
+          </div>
+          <div class="input-footer">
+            <span class="input-hint">Enter to send · Shift+Enter for new line</span>
+            <div class="active-doc-badge" id="active-doc-badge" style="display:none">
+              <div class="dot"></div>
+              <span id="active-doc-badge-name"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- CONFIG MODAL -->
+<div class="modal-overlay" id="config-modal" style="display:none" onclick="closeConfigIfOutside(event)">
+  <div class="modal">
+    <div class="modal-title">⚙ Configuration</div>
+    <div class="modal-sub">Enter your API Gateway URL and S3 bucket name. Saved in your browser only.</div>
+    <div class="form-group">
+      <label class="form-label">API Gateway URL</label>
+      <input class="form-input" id="cfg-api-url" type="text" placeholder="https://xxxxxx.execute-api.us-east-1.amazonaws.com/prod"/>
+      <div class="form-hint">Stop at /prod — do not include /chat</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">PDF Storage Bucket Name</label>
+      <input class="form-input" id="cfg-bucket" type="text" placeholder="my-pdf-chat-docs-2025"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">AWS Region</label>
+      <input class="form-input" id="cfg-region" type="text" placeholder="us-east-1" value="us-east-1"/>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeConfig()">Cancel</button>
+      <button class="btn-primary"   onclick="saveConfig()">Save Configuration</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════════════
+// ██  COGNITO CONFIG  — replace these three values with yours
+// ════════════════════════════════════════════════════════════════════════
+const COGNITO = {
+  userPoolId:  'us-east-1_uxPYUTgIN',     // Cognito → User pools → your pool → User pool ID
+  clientId:    '2mgbrlk1olq68mh3t8j2uj5koh', // Cognito → App integration → App clients → Client ID
+  region:      'us-east-1',
+};
+// ════════════════════════════════════════════════════════════════════════
+
+// ── STATE ────────────────────────────────────────────────────────────────
+let config    = {};
+let documents = [];
+let activeDoc = null;
+let sessionId = null;
+let isLoading = false;
+let authToken = null;
+let userEmail = null;
+let pendingSignupEmail = null;
+
+// ── COGNITO API HELPER ───────────────────────────────────────────────────
+async function cognitoCall(action, body) {
+  const resp = await fetch(
+    `https://cognito-idp.${COGNITO.region}.amazonaws.com/`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/x-amz-json-1.1',
+        'X-Amz-Target':  `AWSCognitoIdentityProviderService.${action}`,
+      },
+      body: JSON.stringify(body),
+    }
+  );
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(data.message || data.__type || 'Authentication error');
+  return data;
+}
+
+// ── AUTH UI HELPERS ──────────────────────────────────────────────────────
+function setAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+}
+function setAuthMsg(msg) {
+  const el = document.getElementById('auth-msg');
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+}
+function setBtnLoading(id, loading, label) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  btn.disabled    = loading;
+  btn.textContent = loading ? 'Please wait...' : label;
+}
+
+function switchAuthTab(tab) {
+  document.getElementById('login-form').style.display  = tab==='login'  ? 'block' : 'none';
+  document.getElementById('signup-form').style.display = tab==='signup' ? 'block' : 'none';
+  document.getElementById('verify-form').style.display = 'none';
+  document.getElementById('tab-login').classList.toggle('active',  tab==='login');
+  document.getElementById('tab-signup').classList.toggle('active', tab==='signup');
+  document.getElementById('auth-hint').style.display = 'block';
+  setAuthError(''); setAuthMsg('');
+}
+
+// ── SIGN UP ──────────────────────────────────────────────────────────────
+async function doSignup() {
+  const email    = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-password').value;
+  setAuthError(''); setAuthMsg('');
+  if (!email || !password) { setAuthError('Please fill in both fields'); return; }
+  if (password.length < 8) { setAuthError('Password must be at least 8 characters'); return; }
+  setBtnLoading('signup-btn', true, 'Create account');
+  try {
+    await cognitoCall('SignUp', {
+      ClientId:        COGNITO.clientId,
+      Username:        email,
+      Password:        password,
+      UserAttributes: [
+      { Name:'email',              Value:email },
+      { Name:'preferred_username', Value:email },
+    ],
+    });
+    pendingSignupEmail = email;
+    document.getElementById('signup-form').style.display = 'none';
+    document.getElementById('verify-form').style.display = 'block';
+    document.getElementById('auth-hint').style.display   = 'none';
+    setAuthMsg('Check your email for a 6-digit verification code');
+  } catch(e) {
+    console.error('Signup error:', e);
+    setAuthError(e.message || 'Something went wrong. Please try again.');
+  } finally {
+    setBtnLoading('signup-btn', false, 'Create account');
+  }
+}
+
+// ── VERIFY EMAIL ─────────────────────────────────────────────────────────
+async function doVerify() {
+  const code = document.getElementById('verify-code').value.trim();
+  setAuthError(''); setAuthMsg('');
+  if (!code || code.length < 6) { setAuthError('Please enter the 6-digit code'); return; }
+  setBtnLoading('verify-btn', true, 'Verify email');
+  try {
+    await cognitoCall('ConfirmSignUp', {
+      ClientId:           COGNITO.clientId,
+      Username:           pendingSignupEmail,
+      ConfirmationCode:   code,
+    });
+    // Switch to login and pre-fill email
+    document.getElementById('verify-form').style.display = 'none';
+    document.getElementById('login-form').style.display  = 'block';
+    document.getElementById('login-email').value = pendingSignupEmail;
+    document.getElementById('tab-login').classList.add('active');
+    document.getElementById('tab-signup').classList.remove('active');
+    document.getElementById('auth-hint').style.display = 'block';
+    setAuthMsg('Email verified! You can now sign in.');
+  } catch(e) {
+    console.error('Auth error:', e);
+    setAuthError(e.message || 'Verification failed. Please check the code and try again.');
+  } finally {
+    setBtnLoading('verify-btn', false, 'Verify email');
+  }
+}
+
+// ── SIGN IN ───────────────────────────────────────────────────────────────
+async function doLogin() {
+  const email    = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  setAuthError(''); setAuthMsg('');
+  if (!email || !password) { setAuthError('Please fill in both fields'); return; }
+  setBtnLoading('login-btn', true, 'Sign in');
+  try {
+    const data = await cognitoCall('InitiateAuth', {
+      AuthFlow:        'USER_PASSWORD_AUTH',
+      ClientId:        COGNITO.clientId,
+      AuthParameters:  { USERNAME:email, PASSWORD:password },
+    });
+    authToken = data.AuthenticationResult.IdToken;
+    userEmail = email;
+    // Persist token so user stays logged in on refresh
+    localStorage.setItem('ayp_token', authToken);
+    localStorage.setItem('ayp_email', userEmail);
+    console.log('Login successful, token saved. Length:', authToken.length);
+    showApp();
+  } catch(e) {
+    console.error('Login error:', e);
+    setAuthError(e.message || 'Sign in failed. Please check your credentials.');
+  } finally {
+    setBtnLoading('login-btn', false, 'Sign in');
+  }
+}
+
+// ── SIGN OUT ──────────────────────────────────────────────────────────────
+function signOut() {
+  authToken = null; userEmail = null;
+  localStorage.removeItem('ayp_token');
+  localStorage.removeItem('ayp_email');
+  document.getElementById('app').style.display         = 'none';
+  document.getElementById('auth-overlay').style.display = 'flex';
+  switchAuthTab('login');
+  toast('info', 'Signed out successfully');
+}
+
+// ── SHOW THE APP ──────────────────────────────────────────────────────────
+function showApp() {
+  document.getElementById('auth-overlay').style.display = 'none';
+  const app = document.getElementById('app');
+  app.style.display    = 'flex';
+  app.style.flexDirection = 'column';
+  app.style.height     = '100%';
+
+  // Show user email in header
+  if (userEmail) {
+    document.getElementById('user-badge').style.display = 'flex';
+    document.getElementById('user-email-display').textContent = userEmail;
+  }
+
+  toast('success', `Welcome! Signed in as ${userEmail}`);
+}
+
+// ── CHECK EXISTING SESSION ON PAGE LOAD ───────────────────────────────────
+function checkSession() {
+  const savedToken = localStorage.getItem('ayp_token');
+  const savedEmail = localStorage.getItem('ayp_email');
+  if (savedToken) {
+    authToken = savedToken;
+    userEmail = savedEmail || '';
+    console.log('Session restored for:', userEmail);
+    showApp();
+    return true;
+  }
+  console.log('No saved session found');
+  return false;
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+(function init() {
+  const savedCfg  = localStorage.getItem('ayp_config');
+  const savedDocs = localStorage.getItem('ayp_documents');
+  if (savedCfg)  config    = JSON.parse(savedCfg);
+  if (savedDocs) documents = JSON.parse(savedDocs);
+
+  // If already logged in from a previous session, skip the auth screen
+  if (!checkSession()) {
+    // Show auth overlay (already visible by default)
+  }
+
+  document.getElementById('chat-input').addEventListener('input', updateSendBtn);
+
+  const zone = document.getElementById('upload-zone');
+  zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag-over');
+    handleFiles(e.dataTransfer.files);
+  });
+  document.getElementById('file-input').addEventListener('change', e => {
+    handleFiles(e.target.files); e.target.value = '';
+  });
+
+  renderDocList();
+  if (config.apiUrl) {} else if (document.getElementById('app').style.display !== 'none') {
+    setTimeout(openConfig, 600);
+  }
+})();
+
+// ── CONFIG ────────────────────────────────────────────────────────────────
+function openConfig() {
+  document.getElementById('cfg-api-url').value = config.apiUrl || '';
+  document.getElementById('cfg-bucket').value  = config.bucket || '';
+  document.getElementById('cfg-region').value  = config.region || 'us-east-1';
+  document.getElementById('config-modal').style.display = 'flex';
+}
+function closeConfig() { document.getElementById('config-modal').style.display = 'none'; }
+function closeConfigIfOutside(e) { if (e.target===document.getElementById('config-modal')) closeConfig(); }
+function saveConfig() {
+  config = {
+    apiUrl: document.getElementById('cfg-api-url').value.trim().replace(/\/+$/,''),
+    bucket: document.getElementById('cfg-bucket').value.trim(),
+    region: document.getElementById('cfg-region').value.trim() || 'us-east-1',
+  };
+  if (!config.apiUrl) { toast('error','API URL is required'); return; }
+  localStorage.setItem('ayp_config', JSON.stringify(config));
+  closeConfig();
+  toast('success','Configuration saved!');
+}
+
+// ── FILE UPLOAD ───────────────────────────────────────────────────────────
+async function handleFiles(fileList) {
+  const files = Array.from(fileList).filter(f => f.type === 'application/pdf');
+  if (!files.length) { toast('error','Only PDF files are supported'); return; }
+  if (!config.apiUrl) { toast('error','Set your API URL in Settings first'); openConfig(); return; }
+  // Always try to load token from localStorage in case it wasn't in memory
+  if (!authToken) authToken = localStorage.getItem('ayp_token');
+  if (!authToken) { toast('error','Please sign in first'); signOut(); return; }
+  for (const file of files) await uploadFile(file);
+}
+
+async function uploadFile(file) {
+  const doc = {
+    id:         crypto.randomUUID(),
+    name:       file.name,
+    s3Key:      null,
+    size:       formatBytes(file.size),
+    status:     'uploading',
+    uploadedAt: new Date().toISOString(),
+  };
+  documents.push(doc);
+  renderDocList();
+  showUploadProgress(doc, 0);
+
+  try {
+    updateUploadProgress(doc, 'Getting upload URL...', 20);
+    console.log('Uploading:', file.name);
+
+    // Call Lambda with auth token
+    const resp = await fetch(`${config.apiUrl}/upload-url`, {
+      method:  'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': authToken,
+      },
+      body: JSON.stringify({ fileName: String(file.name), fileType: 'application/pdf' }),
+    });
+
+    const rawText = await resp.text();
+    console.log('upload-url response:', rawText);
+
+    if (resp.status === 401) throw new Error('Session expired — please sign in again');
+
+    let data;
+    try { data = JSON.parse(rawText); } catch(e) { throw new Error('Invalid response: ' + rawText); }
+    if (typeof data.body === 'string') data = JSON.parse(data.body);
+    if (!data.uploadUrl) throw new Error('No uploadUrl in response: ' + JSON.stringify(data));
+
+    updateUploadProgress(doc, 'Uploading to S3...', 50);
+
+    const s3Resp = await fetch(data.uploadUrl, {
+      method:  'PUT',
+      headers: { 'Content-Type': 'application/pdf' },
+      body:    file,
+    });
+    if (!s3Resp.ok) {
+      const e = await s3Resp.text();
+      throw new Error(`S3 upload failed (${s3Resp.status}): ${e}`);
+    }
+
+    doc.s3Key = data.s3Key;
+    updateUploadProgress(doc, 'Syncing with Knowledge Base...', 80);
+    doc.status = 'syncing';
+    renderDocList();
+
+    await sleep(45000); // wait for KB ingestion
+
+    doc.status = 'ready';
+    saveDocs();
+    renderDocList();
+    hideUploadProgress(doc);
+    toast('success', `"${file.name}" is ready — click it to start chatting!`);
+    if (!activeDoc) selectDoc(doc.id);
+
+  } catch(err) {
+    console.error('Upload error:', err);
+    doc.status = 'error';
+    renderDocList();
+    hideUploadProgress(doc);
+    toast('error', 'Upload failed: ' + err.message);
+    // If token expired, send user back to login
+    if (err.message.includes('Session expired') || err.message.includes('401')) signOut();
+  }
+}
+
+// ── UPLOAD PROGRESS UI ────────────────────────────────────────────────────
+function showUploadProgress(doc, pct) {
+  const wrap = document.getElementById('upload-progress');
+  wrap.classList.add('active');
+  const el = document.createElement('div');
+  el.className = 'progress-file'; el.id = `progress-${doc.id}`;
+  el.innerHTML = `
+    <div class="progress-file-icon">📄</div>
+    <div class="progress-file-info">
+      <div class="progress-file-name">${escHtml(doc.name)}</div>
+      <div class="progress-file-status" id="pstatus-${doc.id}">Preparing...</div>
+      <div class="progress-bar-wrap"><div class="progress-bar" id="pbar-${doc.id}" style="width:${pct}%"></div></div>
+    </div>`;
+  wrap.appendChild(el);
+}
+function updateUploadProgress(doc, status, pct) {
+  const el  = document.getElementById(`pstatus-${doc.id}`);
+  const bar = document.getElementById(`pbar-${doc.id}`);
+  if (el)  el.textContent  = status;
+  if (bar) bar.style.width = pct+'%';
+}
+function hideUploadProgress(doc) {
+  setTimeout(() => {
+    const el   = document.getElementById(`progress-${doc.id}`);
+    const wrap = document.getElementById('upload-progress');
+    if (el) el.remove();
+    if (!wrap.children.length) wrap.classList.remove('active');
+  }, 2000);
+}
+
+// ── DOCUMENT LIST ─────────────────────────────────────────────────────────
+function renderDocList() {
+  const list = document.getElementById('doc-list');
+  if (!documents.length) {
+    list.innerHTML = `<div class="doc-empty"><span class="doc-empty-icon">📂</span>Upload a PDF to get started</div>`;
+    return;
+  }
+  const statusLabels = { ready:'Ready', syncing:'Syncing...', uploading:'Uploading...', error:'Error' };
+  list.innerHTML = documents.map(doc => `
+    <div class="doc-item ${activeDoc?.id===doc.id?'active':''}" onclick="selectDoc('${doc.id}')">
+      <div class="doc-icon">📄</div>
+      <div class="doc-info">
+        <div class="doc-name">${escHtml(doc.name)}</div>
+        <div class="doc-meta">${doc.size} · ${statusLabels[doc.status]||doc.status}</div>
+      </div>
+      <div class="doc-status ${doc.status==='ready'?'':doc.status==='error'?'error':'syncing'}"></div>
+      <button class="doc-delete" onclick="deleteDoc(event,'${doc.id}')" title="Remove">✕</button>
+    </div>`).join('');
+}
+function selectDoc(docId) {
+  const doc = documents.find(d => d.id===docId);
+  if (!doc) return;
+  if (doc.status !== 'ready') { toast('info','Document is still syncing — please wait...'); return; }
+  activeDoc = doc;
+  sessionId = null;
+  renderDocList();
+  document.getElementById('chat-header-doc').style.display   = 'flex';
+  document.getElementById('active-doc-name').textContent     = doc.name;
+  document.getElementById('active-doc-badge').style.display  = 'flex';
+  document.getElementById('active-doc-badge-name').textContent = doc.name;
+  document.getElementById('chat-input').placeholder = `Ask anything about "${doc.name}"...`;
+  document.getElementById('no-doc-banner').style.display     = 'none';
+  updateSendBtn();
+  newChat();
+}
+function deleteDoc(e, docId) {
+  e.stopPropagation();
+  documents = documents.filter(d => d.id!==docId);
+  if (activeDoc?.id===docId) {
+    activeDoc = null;
+    document.getElementById('chat-header-doc').style.display  = 'none';
+    document.getElementById('active-doc-badge').style.display = 'none';
+    document.getElementById('chat-input').placeholder = 'Ask a question about your document...';
+  }
+  saveDocs(); renderDocList();
+}
+function saveDocs() { localStorage.setItem('ayp_documents', JSON.stringify(documents)); }
+
+// ── CHAT ──────────────────────────────────────────────────────────────────
+function newChat() {
+  sessionId = null;
+  document.getElementById('chat-title').textContent = activeDoc ? activeDoc.name : 'New Conversation';
+  document.getElementById('messages').innerHTML = `
+    <div class="chat-empty" id="chat-empty">
+      <div class="chat-empty-hero">Ask anything about<br/><em>your documents</em></div>
+      <p class="chat-empty-sub">Upload a PDF in the sidebar, then ask questions. Every answer comes with page citations.</p>
+      <div class="starter-prompts">
+        <div class="starter-card" onclick="useStarter(this)"><span class="starter-card-icon">📋</span><div class="starter-card-text">Summarize the key points of this document</div></div>
+        <div class="starter-card" onclick="useStarter(this)"><span class="starter-card-icon">🔍</span><div class="starter-card-text">What are the main conclusions or recommendations?</div></div>
+        <div class="starter-card" onclick="useStarter(this)"><span class="starter-card-icon">📊</span><div class="starter-card-text">List all important numbers, dates or figures mentioned</div></div>
+        <div class="starter-card" onclick="useStarter(this)"><span class="starter-card-icon">❓</span><div class="starter-card-text">What questions does this document answer?</div></div>
+      </div>
+    </div>`;
+}
+function useStarter(el) {
+  const input = document.getElementById('chat-input');
+  input.value = el.querySelector('.starter-card-text').textContent;
+  autoResize(input); updateSendBtn(); input.focus();
+}
+function handleKey(e) {
+  if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 180)+'px';
+}
+function updateSendBtn() {
+  const val = document.getElementById('chat-input').value.trim();
+  document.getElementById('send-btn').disabled = !val || isLoading;
+}
+
+async function sendMessage() {
+  const input    = document.getElementById('chat-input');
+  const question = input.value.trim();
+  if (!question || isLoading) return;
+  if (!authToken) authToken = localStorage.getItem('ayp_token');
+  if (!authToken) { toast('error','Please sign in first'); signOut(); return; }
+  if (!config.apiUrl) { toast('error','Set your API URL in Settings'); openConfig(); return; }
+  if (!activeDoc) {
+    document.getElementById('no-doc-banner').style.display = 'flex';
+    toast('info','Please select a document from the sidebar first');
+    return;
+  }
+
+  const emptyEl = document.getElementById('chat-empty');
+  if (emptyEl) emptyEl.remove();
+
+  const titleEl = document.getElementById('chat-title');
+  if (!sessionId) titleEl.textContent = question.length>50 ? question.slice(0,50)+'…' : question;
+
+  appendMessage('user', question);
+  input.value = ''; input.style.height = 'auto'; updateSendBtn();
+
+  const typingId = appendTyping();
+  isLoading = true; updateSendBtn();
+
+  try {
+    const body = { question };
+    if (sessionId)       body.session_id = sessionId;
+    if (activeDoc.s3Key) body.s3Key      = activeDoc.s3Key;
+    else if (activeDoc.name) body.s3Key  = `pdfs/${activeDoc.name}`;
+
+    const resp = await fetch(`${config.apiUrl}/chat`, {
+      method:  'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': authToken,  // JWT token sent with every request
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (resp.status===401) { signOut(); throw new Error('Session expired — please sign in again'); }
+    if (!resp.ok) throw new Error(`API error ${resp.status}: ${await resp.text()}`);
+
+    const data = await resp.json();
+    sessionId  = data.session_id;
+    removeTyping(typingId);
+    appendMessage('ai', data.answer, data.sources||[]);
+
+  } catch(err) {
+    removeTyping(typingId);
+    appendMessage('ai', `Something went wrong: ${err.message}`, []);
+    toast('error', 'Request failed');
+    console.error(err);
+  }
+  isLoading = false; updateSendBtn();
+}
+
+// ── MESSAGE RENDERING ─────────────────────────────────────────────────────
+function appendMessage(role, text, sources=[]) {
+  const msgs  = document.getElementById('messages');
+  const group = document.createElement('div');
+  group.className = 'message-group';
+  let sourcesHtml = '';
+  if (sources.length) {
+    const tags = sources.map(s =>
+      `<div class="source-tag">📄 ${escHtml(s.file)} <span class="page">${s.page&&s.page!=='N/A'?'· p.'+s.page:''}</span></div>`
+    ).join('');
+    sourcesHtml = `<div class="sources">${tags}</div>`;
+  }
+  const avatar = role==='user'
+    ? `<div class="message-avatar user">${userEmail?userEmail[0].toUpperCase():'U'}</div>`
+    : `<div class="message-avatar ai">✦</div>`;
+  group.innerHTML = `
+    ${avatar}
+    <div class="message-body">
+      <div class="message-sender">${role==='user'?'You':'AskYourPDF'}</div>
+      <div class="message-content">${formatText(text)}${sourcesHtml}</div>
+    </div>`;
+  msgs.appendChild(group);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+function appendTyping() {
+  const id   = 'typing-'+Date.now();
+  const msgs = document.getElementById('messages');
+  const el   = document.createElement('div');
+  el.className = 'message-group'; el.id = id;
+  el.innerHTML = `
+    <div class="message-avatar ai">✦</div>
+    <div class="message-body">
+      <div class="message-sender">AskYourPDF</div>
+      <div class="typing-indicator">
+        <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+      </div>
+    </div>`;
+  msgs.appendChild(el); msgs.scrollTop = msgs.scrollHeight;
+  return id;
+}
+function removeTyping(id) { const el=document.getElementById(id); if(el) el.remove(); }
+
+function formatText(text) {
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/`(.+?)`/g,'<code>$1</code>')
+    .replace(/^- (.+)$/gm,'• $1')
+    .replace(/\n\n/g,'</p><p>')
+    .replace(/\n/g,'<br/>')
+    .replace(/^/,'<p>').replace(/$/,'</p>');
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────
+function toast(type, message) {
+  const c  = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${{success:'✓',error:'✕',info:'ℹ'}[type]||'•'}</span>${escHtml(message)}`;
+  c.appendChild(el);
+  setTimeout(() => {
+    el.style.cssText += 'opacity:0;transform:translateX(20px);transition:all 0.3s;';
+    setTimeout(() => el.remove(), 300);
+  }, 3500);
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function formatBytes(b) {
+  if (b<1024) return b+' B';
+  if (b<1048576) return (b/1024).toFixed(1)+' KB';
+  return (b/1048576).toFixed(1)+' MB';
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+</script>
+</body>
+</html>
