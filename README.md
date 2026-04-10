@@ -48,3 +48,90 @@ User asks question → API Gateway → Lambda retrieves top-5 relevant chunks �
 - **Vector DB**: Aurora Serverless v2 (managed by Bedrock)
 - **CDN**: Amazon CloudFront
 - **Frontend**: Vanilla HTML, CSS, JavaScript (no framework)
+
+
+
+
+
+## Phase 2 — Frontend, Authentication & Deployment
+
+### What was added in this update
+
+After the backend was working, the project was extended into a 
+fully deployed public web application available at 
+**[askyourpdf.org](https://askyourpdf.org)**
+
+---
+
+### New files and changes
+
+| File | What changed |
+|---|---|
+| `index.html` | Complete browser UI — new file |
+| `pdf-chat-query/lambda_function.py` | Fixed document scoping using correct S3 URI filter |
+| `pdf-presign-url/lambda_function.py` | New Lambda for secure S3 uploads via pre-signed URLs |
+| `pdf-kb-auto-sync/lambda_function.py` | New Lambda to auto-trigger Knowledge Base sync on upload |
+
+---
+
+### What was built
+
+**Browser UI (index.html)**
+A single HTML file — no frameworks, no build tools. Dark-themed 
+chat interface with a document sidebar, upload zone, chat thread, 
+source citations, and a settings modal. Hosted on S3 + CloudFront.
+
+**User Authentication**
+Amazon Cognito handles signup, email verification, and login. 
+Every API call requires a valid JWT token. Only registered users 
+can upload documents and ask questions.
+
+**Secure PDF Upload**
+The `pdf-presign-url` Lambda generates a temporary 5-minute 
+signed S3 URL. The browser uploads the PDF directly to S3 — 
+no AWS credentials ever touch the frontend code.
+
+**Automatic Knowledge Base Sync**
+The `pdf-kb-auto-sync` Lambda is triggered by S3 every time a 
+PDF is uploaded. It calls the Bedrock StartIngestionJob API so 
+documents are searchable within ~45 seconds of upload — no 
+manual sync needed.
+
+**Document Scoping Fix**
+Answers now come only from the document the user selected. 
+The query Lambda filters using the built-in 
+`x-amz-bedrock-kb-source-uri` metadata field — the exact S3 
+URI of the selected document.
+
+---
+
+### AWS services added in Phase 2
+
+| Service | Purpose |
+|---|---|
+| Amazon Cognito | User registration and JWT authentication |
+| CloudFront | HTTPS and global CDN for the frontend |
+| Route 53 | Custom domain — askyourpdf.org |
+| AWS Certificate Manager | Free SSL certificate for HTTPS |
+| S3 (second bucket) | Hosts the index.html static website (it was there in the first commit too) |
+
+---
+
+### How to use the app
+
+1. Visit **https://askyourpdf.org**
+2. Create an account with your email — verify with the 6-digit code
+3. Sign in
+4. Drag and drop a PDF onto the sidebar
+5. Wait ~45 seconds for the green dot to appear
+6. Click the document and start asking questions
+7. Every answer includes the source filename and page number
+
+---
+
+### Full technical report
+
+See `phase2_report_final.docx` in the repository releases for 
+the complete step-by-step breakdown of everything built, 
+why each decision was made, and every problem encountered 
+during deployment with its fix.
